@@ -11,247 +11,389 @@
 <title>Blockteilzeit-Rechner</title>
 
 <style>
-    :root {
-        --rot: #e60000;
-        --rot-dunkel: #b80000;
-        --grau-bg: #f3f4f6;
-        --karte: #ffffff;
-        --text: #222;
-        --linie: #ddd;
-        --soft: #fafafa;
+:root {
+    --rot: #e60000;
+    --rot-dunkel: #b80000;
+    --bg: #f3f4f6;
+    --karte: #ffffff;
+    --text: #1f2937;
+    --text-soft: #6b7280;
+    --linie: #e5e7eb;
+    --soft: #f9fafb;
+    --gruen-bg: #e8f5e9;
+    --gruen-text: #1b5e20;
+    --blau-bg: #e3f2fd;
+    --blau-text: #0d47a1;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Segoe UI, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.app {
+    max-width: 980px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--bg);
+}
+
+.header {
+    background: linear-gradient(135deg, var(--rot), var(--rot-dunkel));
+    color: #fff;
+    padding: 24px 18px 28px;
+    border-bottom-left-radius: 26px;
+    border-bottom-right-radius: 26px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 26px;
+    line-height: 1.2;
+}
+
+.header p {
+    margin: 8px 0 0;
+    font-size: 14px;
+    opacity: 0.95;
+}
+
+.content {
+    padding: 16px;
+}
+
+.panel {
+    background: var(--karte);
+    border: 1px solid var(--linie);
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.07);
+    margin-bottom: 16px;
+}
+
+.panel-title {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 14px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.feld {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #374151;
+}
+
+input,
+select {
+    width: 100%;
+    min-height: 46px;
+    padding: 11px 12px;
+    border: 1px solid var(--linie);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--text);
+    font-size: 15px;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: var(--rot);
+    box-shadow: 0 0 0 3px rgba(230,0,0,0.12);
+}
+
+input[readonly] {
+    background: #f3f4f6;
+    color: #555;
+}
+
+.radioBox {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--soft);
+    border: 1px solid var(--linie);
+    border-radius: 14px;
+    padding: 10px;
+}
+
+.radioBox label {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.radioBox input {
+    width: auto;
+    min-height: auto;
+    margin-right: 8px;
+}
+
+button {
+    width: 100%;
+    min-height: 52px;
+    border: none;
+    border-radius: 16px;
+    background: var(--rot);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(230,0,0,0.25);
+}
+
+button:hover {
+    background: var(--rot-dunkel);
+}
+
+.fehler {
+    display: none;
+    background: #fff0f0;
+    color: #9b0000;
+    border-left: 5px solid var(--rot);
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    font-weight: 700;
+}
+
+.ergebnis {
+    display: none;
+}
+
+.kpi-main {
+    background: linear-gradient(135deg, var(--rot), var(--rot-dunkel));
+    color: white;
+    border-radius: 22px;
+    padding: 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 8px 22px rgba(230,0,0,0.24);
+}
+
+.kpi-main .titel {
+    font-size: 14px;
+    opacity: 0.92;
+}
+
+.kpi-main .wert {
+    font-size: 34px;
+    font-weight: 900;
+    margin-top: 4px;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.kpi-card {
+    background: var(--karte);
+    border: 1px solid var(--linie);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: 0 5px 16px rgba(0,0,0,0.06);
+}
+
+.kpi-card .titel {
+    font-size: 12px;
+    color: var(--text-soft);
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
+.kpi-card .wert {
+    font-size: 21px;
+    font-weight: 900;
+    color: var(--rot);
+}
+
+.details {
+    background: var(--karte);
+    border: 1px solid var(--linie);
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 14px;
+    line-height: 1.65;
+    font-size: 14px;
+}
+
+details {
+    background: var(--karte);
+    border: 1px solid var(--linie);
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 14px;
+}
+
+summary {
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.details-content {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.hinweis {
+    background: #fff7f7;
+    border-left: 5px solid var(--rot);
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.55;
+    margin-bottom: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+th,
+td {
+    padding: 10px;
+    border-bottom: 1px solid var(--linie);
+    text-align: left;
+    font-size: 14px;
+}
+
+th {
+    background: #f3f4f6;
+}
+
+.badge {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.arbeit {
+    background: var(--gruen-bg);
+    color: var(--gruen-text);
+}
+
+.frei {
+    background: var(--blau-bg);
+    color: var(--blau-text);
+}
+
+.monatskarten {
+    display: none;
+}
+
+.monat-card {
+    background: #fff;
+    border: 1px solid var(--linie);
+    border-radius: 16px;
+    padding: 13px;
+    margin-top: 10px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+}
+
+.monat-card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.monat-name {
+    font-size: 16px;
+    font-weight: 900;
+}
+
+.monat-werte {
+    font-size: 13px;
+    color: var(--text-soft);
+    line-height: 1.5;
+}
+
+@media(max-width: 760px) {
+    .header {
+        padding: 22px 16px 26px;
     }
 
-    body {
-        margin: 0;
-        font-family: Segoe UI, Arial, sans-serif;
-        background: var(--grau-bg);
-        color: var(--text);
-        padding: 20px;
+    .header h1 {
+        font-size: 23px;
     }
 
-    .app {
-        max-width: 950px;
-        margin: auto;
-        background: var(--karte);
-        border-radius: 18px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-        overflow: hidden;
-    }
-
-    .kopf {
-        background: linear-gradient(135deg, var(--rot), var(--rot-dunkel));
-        color: white;
-        padding: 22px;
-        text-align: center;
-    }
-
-    .kopf h1 {
-        margin: 0;
-        font-size: 26px;
-    }
-
-    .kopf p {
-        margin: 8px 0 0;
-        font-size: 14px;
-        opacity: 0.95;
-    }
-
-    .inhalt {
-        padding: 22px;
+    .content {
+        padding: 12px;
     }
 
     .grid {
-        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    input,
+    select {
+        min-height: 52px;
+        font-size: 16px;
+    }
+
+    .kpi-grid {
         grid-template-columns: 1fr 1fr;
-        gap: 14px;
     }
 
-    .feld {
-        display: flex;
-        flex-direction: column;
+    .kpi-main .wert {
+        font-size: 31px;
     }
 
-    label {
-        font-weight: 600;
-        margin-bottom: 6px;
-        font-size: 14px;
+    .kpi-card .wert {
+        font-size: 19px;
     }
 
-    input, select {
-        padding: 11px;
-        border: 1px solid var(--linie);
-        border-radius: 10px;
-        font-size: 15px;
-        box-sizing: border-box;
-        width: 100%;
-        background: white;
+    .sticky-button {
+        position: sticky;
+        bottom: 10px;
+        z-index: 50;
     }
 
-    input[type="radio"] {
-        width: auto;
-        margin-right: 8px;
-    }
-
-    input:focus, select:focus {
-        outline: none;
-        border-color: var(--rot);
-        box-shadow: 0 0 0 2px rgba(230,0,0,0.12);
-    }
-
-    input[readonly] {
-        background: #f1f1f1;
-        color: #555;
-    }
-
-    .radioBox {
-        background: #fafafa;
-        border: 1px solid #e5e5e5;
-        border-radius: 12px;
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .radioBox label {
-        margin: 0;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-    }
-
-    button {
-        width: 100%;
-        margin-top: 20px;
-        padding: 14px;
-        border: none;
-        border-radius: 12px;
-        background: var(--rot);
-        color: white;
-        font-size: 17px;
-        font-weight: 700;
-        cursor: pointer;
-    }
-
-    button:hover {
-        background: var(--rot-dunkel);
-    }
-
-    .ergebnis {
-        margin-top: 22px;
+    .desktop-table {
         display: none;
     }
 
-    .karten {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
+    .monatskarten {
+        display: block;
     }
+}
 
-    .karte {
-        background: var(--soft);
-        border: 1px solid #e5e5e5;
-        border-radius: 14px;
-        padding: 16px;
+@media(max-width: 420px) {
+    .kpi-grid {
+        grid-template-columns: 1fr;
     }
-
-    .karte .titel {
-        font-size: 13px;
-        color: #666;
-        margin-bottom: 6px;
-    }
-
-    .karte .wert {
-        font-size: 24px;
-        font-weight: 800;
-        color: var(--rot);
-    }
-
-    .details {
-        margin-top: 16px;
-        padding: 14px;
-        background: #f7f7f7;
-        border-radius: 12px;
-        font-size: 14px;
-        line-height: 1.7;
-    }
-
-    .hinweis {
-        margin-top: 18px;
-        background: #fff7f7;
-        border-left: 5px solid var(--rot);
-        padding: 14px;
-        border-radius: 10px;
-        font-size: 14px;
-        line-height: 1.5;
-    }
-
-    .fehler {
-        margin-top: 16px;
-        background: #fff0f0;
-        color: #9b0000;
-        padding: 12px;
-        border-radius: 10px;
-        display: none;
-        font-weight: 600;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 14px;
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    th, td {
-        padding: 10px;
-        border-bottom: 1px solid #e5e5e5;
-        text-align: left;
-        font-size: 14px;
-    }
-
-    th {
-        background: #eeeeee;
-    }
-
-    .badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 700;
-    }
-
-    .arbeit {
-        background: #e8f5e9;
-        color: #1b5e20;
-    }
-
-    .frei {
-        background: #e3f2fd;
-        color: #0d47a1;
-    }
-
-    @media(max-width: 700px) {
-        .grid,
-        .karten {
-            grid-template-columns: 1fr;
-        }
-
-        body {
-            padding: 10px;
-        }
-
-        .kopf h1 {
-            font-size: 22px;
-        }
-
-        th, td {
-            font-size: 13px;
-        }
-    }
+}
 </style>
 </head>
 
@@ -259,197 +401,197 @@
 
 <div class="app">
 
-    <div class="kopf">
+    <div class="header">
         <h1>Blockteilzeit-Rechner</h1>
-        <p>Berechnung des reduzierten Brutto- und Nettogehalts inklusive grober Steuerprogression</p>
+        <p>Brutto, Netto, Differenz und Monatsübersicht auf Basis des ersten freien Monats.</p>
     </div>
 
-    <div class="inhalt">
+    <div class="content">
 
-        <div class="grid">
+        <div class="panel">
+            <div class="panel-title">Eingaben</div>
 
-            <div class="feld">
-                <label for="brutto">Aktuelles Vollzeit-Bruttogehalt monatlich (€)</label>
-                <input type="number" id="brutto" placeholder="z. B. 3500" step="0.01">
-            </div>
+            <div class="grid">
 
-            <div class="feld">
-                <label for="steuerklasse">Steuerklasse</label>
-                <select id="steuerklasse">
-                    <option value="1">Steuerklasse I</option>
-                    <option value="2">Steuerklasse II</option>
-                    <option value="3">Steuerklasse III</option>
-                    <option value="4">Steuerklasse IV</option>
-                    <option value="5">Steuerklasse V</option>
-                    <option value="6">Steuerklasse VI</option>
-                </select>
-            </div>
-
-            <div class="feld">
-                <label for="modell">Modell der Arbeitszeitreduzierung</label>
-                <select id="modell" onchange="setzeModell()">
-                    <option value="">Bitte Modell auswählen</option>
-
-                    <optgroup label="Entgeltreduzierung auf 50 %">
-                        <option value="1-1">50 % | 1 Monat Arbeit / 1 Monat frei</option>
-                        <option value="2-2">50 % | 2 Monate Arbeit / 2 Monate frei</option>
-                        <option value="3-3">50 % | 3 Monate Arbeit / 3 Monate frei</option>
-                        <option value="4-4">50 % | 4 Monate Arbeit / 4 Monate frei</option>
-                        <option value="5-5">50 % | 5 Monate Arbeit / 5 Monate frei</option>
-                        <option value="6-6">50 % | 6 Monate Arbeit / 6 Monate frei</option>
-                    </optgroup>
-
-                    <optgroup label="Entgeltreduzierung auf 75 %">
-                        <option value="3-1">75 % | 3 Monate Arbeit / 1 Monat frei</option>
-                        <option value="6-2">75 % | 6 Monate Arbeit / 2 Monate frei</option>
-                        <option value="9-3">75 % | 9 Monate Arbeit / 3 Monate frei</option>
-                        <option value="12-4">75 % | 12 Monate Arbeit / 4 Monate frei</option>
-                        <option value="15-5">75 % | 15 Monate Arbeit / 5 Monate frei</option>
-                        <option value="18-6">75 % | 18 Monate Arbeit / 6 Monate frei</option>
-                    </optgroup>
-                </select>
-            </div>
-
-            <div class="feld">
-                <label for="startmonat">Erster freier Monat</label>
-                <select id="startmonat">
-                    <option value="0">Januar</option>
-                    <option value="1">Februar</option>
-                    <option value="2">März</option>
-                    <option value="3">April</option>
-                    <option value="4">Mai</option>
-                    <option value="5">Juni</option>
-                    <option value="6">Juli</option>
-                    <option value="7">August</option>
-                    <option value="8">September</option>
-                    <option value="9">Oktober</option>
-                    <option value="10">November</option>
-                    <option value="11">Dezember</option>
-                </select>
-            </div>
-
-            <div class="feld">
-                <label for="arbeit">Monate Arbeitsphase</label>
-                <input type="number" id="arbeit" readonly>
-            </div>
-
-            <div class="feld">
-                <label for="frei">Monate Freistellungsphase</label>
-                <input type="number" id="frei" readonly>
-            </div>
-
-            <div class="feld">
-                <label for="sonderzahlung">Sonderzahlungen jährlich optional (€)</label>
-                <input type="number" id="sonderzahlung" placeholder="z. B. 1000" step="0.01">
-            </div>
-
-            <div class="feld">
-                <label>Netto-Berechnung</label>
-                <div class="radioBox">
-                    <label>
-                        <input type="radio" name="nettoModus" value="einfach" onchange="umschaltenNettoModus()">
-                        Einfache Netto-Schätzung
-                    </label>
-                    <label>
-                        <input type="radio" name="nettoModus" value="progression" checked onchange="umschaltenNettoModus()">
-                        Steuerprogression grob berücksichtigen
-                    </label>
+                <div class="feld">
+                    <label for="brutto">Aktuelles Vollzeit-Bruttogehalt monatlich (€)</label>
+                    <input type="number" id="brutto" placeholder="z. B. 3500" step="0.01">
                 </div>
-            </div>
 
-            <div class="feld" id="faktorFeld" style="display:none;">
-                <label for="nettofaktor">Netto-Faktor bei einfacher Schätzung</label>
-                <select id="nettofaktor">
-                    <option value="auto">Automatisch nach Steuerklasse</option>
-                    <option value="0.80">80 % vom Brutto</option>
-                    <option value="0.75">75 % vom Brutto</option>
-                    <option value="0.70">70 % vom Brutto</option>
-                    <option value="0.65">65 % vom Brutto</option>
-                    <option value="0.60">60 % vom Brutto</option>
-                    <option value="0.55">55 % vom Brutto</option>
-                    <option value="0.50">50 % vom Brutto</option>
-                </select>
-            </div>
+                <div class="feld">
+                    <label for="steuerklasse">Steuerklasse</label>
+                    <select id="steuerklasse">
+                        <option value="1">Steuerklasse I</option>
+                        <option value="2">Steuerklasse II</option>
+                        <option value="3">Steuerklasse III</option>
+                        <option value="4">Steuerklasse IV</option>
+                        <option value="5">Steuerklasse V</option>
+                        <option value="6">Steuerklasse VI</option>
+                    </select>
+                </div>
 
-            <div class="feld">
-                <label for="sozial">Sozialabgaben pauschal (%)</label>
-                <input type="number" id="sozial" value="20.5" step="0.1">
-            </div>
+                <div class="feld">
+                    <label for="modell">Modell der Arbeitszeitreduzierung</label>
+                    <select id="modell" onchange="setzeModell()">
+                        <option value="">Bitte Modell auswählen</option>
 
+                        <optgroup label="Entgeltreduzierung auf 50 %">
+                            <option value="1-1">50 % | 1 Monat Arbeit / 1 Monat frei</option>
+                            <option value="2-2">50 % | 2 Monate Arbeit / 2 Monate frei</option>
+                            <option value="3-3">50 % | 3 Monate Arbeit / 3 Monate frei</option>
+                            <option value="4-4">50 % | 4 Monate Arbeit / 4 Monate frei</option>
+                            <option value="5-5">50 % | 5 Monate Arbeit / 5 Monate frei</option>
+                            <option value="6-6">50 % | 6 Monate Arbeit / 6 Monate frei</option>
+                        </optgroup>
+
+                        <optgroup label="Entgeltreduzierung auf 75 %">
+                            <option value="3-1">75 % | 3 Monate Arbeit / 1 Monat frei</option>
+                            <option value="6-2">75 % | 6 Monate Arbeit / 2 Monate frei</option>
+                            <option value="9-3">75 % | 9 Monate Arbeit / 3 Monate frei</option>
+                            <option value="12-4">75 % | 12 Monate Arbeit / 4 Monate frei</option>
+                            <option value="15-5">75 % | 15 Monate Arbeit / 5 Monate frei</option>
+                            <option value="18-6">75 % | 18 Monate Arbeit / 6 Monate frei</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="feld">
+                    <label for="startmonat">Erster freier Monat</label>
+                    <select id="startmonat">
+                        <option value="0">Januar</option>
+                        <option value="1">Februar</option>
+                        <option value="2">März</option>
+                        <option value="3">April</option>
+                        <option value="4">Mai</option>
+                        <option value="5">Juni</option>
+                        <option value="6">Juli</option>
+                        <option value="7">August</option>
+                        <option value="8">September</option>
+                        <option value="9">Oktober</option>
+                        <option value="10">November</option>
+                        <option value="11">Dezember</option>
+                    </select>
+                </div>
+
+                <div class="feld">
+                    <label for="arbeit">Monate Arbeitsphase</label>
+                    <input type="number" id="arbeit" readonly>
+                </div>
+
+                <div class="feld">
+                    <label for="frei">Monate Freistellungsphase</label>
+                    <input type="number" id="frei" readonly>
+                </div>
+
+                <div class="feld">
+                    <label for="sonderzahlung">Sonderzahlungen jährlich optional (€)</label>
+                    <input type="number" id="sonderzahlung" placeholder="z. B. 1000" step="0.01">
+                </div>
+
+                <div class="feld">
+                    <label for="sozial">Sozialabgaben pauschal (%)</label>
+                    <input type="number" id="sozial" value="20.5" step="0.1">
+                </div>
+
+                <div class="feld">
+                    <label>Netto-Berechnung</label>
+                    <div class="radioBox">
+                        <label>
+                            <input type="radio" name="nettoModus" value="einfach" onchange="umschaltenNettoModus()">
+                            Einfache Netto-Schätzung
+                        </label>
+                        <label>
+                            <input type="radio" name="nettoModus" value="progression" checked onchange="umschaltenNettoModus()">
+                            Steuerprogression grob berücksichtigen
+                        </label>
+                    </div>
+                </div>
+
+                <div class="feld" id="faktorFeld" style="display:none;">
+                    <label for="nettofaktor">Netto-Faktor bei einfacher Schätzung</label>
+                    <select id="nettofaktor">
+                        <option value="auto">Automatisch nach Steuerklasse</option>
+                        <option value="0.80">80 % vom Brutto</option>
+                        <option value="0.75">75 % vom Brutto</option>
+                        <option value="0.70">70 % vom Brutto</option>
+                        <option value="0.65">65 % vom Brutto</option>
+                        <option value="0.60">60 % vom Brutto</option>
+                        <option value="0.55">55 % vom Brutto</option>
+                        <option value="0.50">50 % vom Brutto</option>
+                    </select>
+                </div>
+
+            </div>
         </div>
 
-        <button onclick="berechnen()">Berechnen</button>
+        <div class="sticky-button">
+            <button onclick="berechnen()">Berechnen</button>
+        </div>
 
         <div id="fehler" class="fehler"></div>
 
         <div id="ergebnis" class="ergebnis">
 
-            <div class="karten">
+            <div class="kpi-main">
+                <div class="titel">Neues Netto monatlich</div>
+                <div class="wert" id="btNetto">0,00 €</div>
+            </div>
 
-                <div class="karte">
-                    <div class="titel">Neues Brutto monatlich</div>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="titel">Neues Brutto</div>
                     <div class="wert" id="btBrutto">0,00 €</div>
                 </div>
 
-                <div class="karte">
-                    <div class="titel">Neues Netto monatlich</div>
-                    <div class="wert" id="btNetto">0,00 €</div>
-                </div>
-
-                <div class="karte">
-                    <div class="titel">Neues Brutto für 2 Monate</div>
-                    <div class="wert" id="brutto2Monate">0,00 €</div>
-                </div>
-
-                <div class="karte">
-                    <div class="titel">Neues Netto für 2 Monate</div>
-                    <div class="wert" id="netto2Monate">0,00 €</div>
-                </div>
-
-                <div class="karte">
-                    <div class="titel">Monatliche Brutto-Differenz</div>
+                <div class="kpi-card">
+                    <div class="titel">Brutto-Differenz</div>
                     <div class="wert" id="differenz">0,00 €</div>
                 </div>
 
-                <div class="karte">
+                <div class="kpi-card">
                     <div class="titel">Entgeltquote</div>
                     <div class="wert" id="quote">0 %</div>
                 </div>
 
-                <div class="karte">
-                    <div class="titel">Durchschnittssteuersatz vorher</div>
-                    <div class="wert" id="avgAlt">0 %</div>
+                <div class="kpi-card">
+                    <div class="titel">Netto für 2 Monate</div>
+                    <div class="wert" id="netto2Monate">0,00 €</div>
                 </div>
 
-                <div class="karte">
-                    <div class="titel">Durchschnittssteuersatz neu</div>
+                <div class="kpi-card">
+                    <div class="titel">Brutto für 2 Monate</div>
+                    <div class="wert" id="brutto2Monate">0,00 €</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="titel">Ø Steuer neu</div>
                     <div class="wert" id="avgNeu">0 %</div>
                 </div>
-
-                <div class="karte">
-                    <div class="titel">Grenzsteuersatz vorher</div>
-                    <div class="wert" id="grenzAlt">0 %</div>
-                </div>
-
-                <div class="karte">
-                    <div class="titel">Grenzsteuersatz neu</div>
-                    <div class="wert" id="grenzNeu">0 %</div>
-                </div>
-
             </div>
 
-            <div class="details" id="details"></div>
+            <details open>
+                <summary>Monatsübersicht anzeigen</summary>
+                <div class="details-content" id="monatsliste"></div>
+            </details>
 
-            <div class="details">
-                <b>Monatsübersicht</b>
-                <div id="monatsliste"></div>
-            </div>
+            <details>
+                <summary>Berechnungsdetails anzeigen</summary>
+                <div class="details-content" id="details"></div>
+            </details>
+
+            <details>
+                <summary>Steuerwerte anzeigen</summary>
+                <div class="details-content">
+                    Durchschnittssteuersatz vorher: <b id="avgAlt">0 %</b><br>
+                    Durchschnittssteuersatz neu: <b id="avgNeuDetail">0 %</b><br>
+                    Grenzsteuersatz vorher: <b id="grenzAlt">0 %</b><br>
+                    Grenzsteuersatz neu: <b id="grenzNeu">0 %</b>
+                </div>
+            </details>
 
             <div class="hinweis">
                 <b>Hinweis:</b><br>
-                Die Brutto-Berechnung erfolgt nach dem ausgewählten Blockteilzeit-Modell.
-                Die Netto-Berechnung ist entweder eine einfache Schätzung oder eine grobe Progressionsnäherung.
-                Sie ersetzt keine verbindliche Entgeltabrechnung, Steuerberatung oder Berechnung durch die Personalabteilung.
+                Die Berechnung ist eine vereinfachte Orientierung. Die Netto-Berechnung ersetzt keine verbindliche Entgeltabrechnung, Steuerberatung oder Prüfung durch die Personalabteilung.
             </div>
 
         </div>
@@ -471,6 +613,15 @@ function prozent(wert) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }) + " %";
+}
+
+function getMonatsname(index) {
+    const monate = [
+        "Januar", "Februar", "März", "April", "Mai", "Juni",
+        "Juli", "August", "September", "Oktober", "November", "Dezember"
+    ];
+
+    return monate[index] || "";
 }
 
 function getNettoFaktor(steuerklasse) {
@@ -693,11 +844,13 @@ function berechnen() {
     if (nettoModus === "progression") {
         document.getElementById("avgAlt").innerText = prozent(avgAlt * 100);
         document.getElementById("avgNeu").innerText = prozent(avgNeu * 100);
+        document.getElementById("avgNeuDetail").innerText = prozent(avgNeu * 100);
         document.getElementById("grenzAlt").innerText = prozent(grenzAlt * 100);
         document.getElementById("grenzNeu").innerText = prozent(grenzNeu * 100);
     } else {
         document.getElementById("avgAlt").innerText = "—";
         document.getElementById("avgNeu").innerText = "—";
+        document.getElementById("avgNeuDetail").innerText = "—";
         document.getElementById("grenzAlt").innerText = "—";
         document.getElementById("grenzNeu").innerText = "—";
     }
@@ -765,51 +918,30 @@ function berechnen() {
     ergebnis.style.display = "block";
 }
 
-function getMonatsname(index) {
-    const monate = [
-        "Januar", "Februar", "März", "April", "Mai", "Juni",
-        "Juli", "August", "September", "Oktober", "November", "Dezember"
-    ];
-
-    return monate[index] || "";
-}
-
 function erstelleMonatsliste(ersterFreierMonat, gesamtMonate, arbeit, frei, btBrutto, btNetto) {
     const monate = [
         "Januar", "Februar", "März", "April", "Mai", "Juni",
         "Juli", "August", "September", "Oktober", "November", "Dezember"
     ];
 
-    /*
-      Der ausgewählte Monat ist der erste freie Monat.
-      Die Arbeitsphase wird automatisch davor berechnet.
-
-      Beispiel:
-      Modell: 3 Monate Arbeit / 1 Monat frei
-      Erster freier Monat: April
-
-      Ergebnis:
-      Januar   = Arbeitsphase
-      Februar  = Arbeitsphase
-      März     = Arbeitsphase
-      April    = Freistellung
-    */
-
     const ersterArbeitsMonatAbsolut = ersterFreierMonat - arbeit;
 
-    let html = `
-        <table>
-            <thead>
-                <tr>
-                    <th>Nr.</th>
-                    <th>Monat</th>
-                    <th>Phase</th>
-                    <th>Brutto</th>
-                    <th>Netto geschätzt</th>
-                </tr>
-            </thead>
-            <tbody>
+    let tableHtml = `
+        <div class="desktop-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nr.</th>
+                        <th>Monat</th>
+                        <th>Phase</th>
+                        <th>Brutto</th>
+                        <th>Netto geschätzt</th>
+                    </tr>
+                </thead>
+                <tbody>
     `;
+
+    let cardHtml = `<div class="monatskarten">`;
 
     for (let i = 0; i < gesamtMonate; i++) {
         const absoluterMonat = ersterArbeitsMonatAbsolut + i;
@@ -838,7 +970,7 @@ function erstelleMonatsliste(ersterFreierMonat, gesamtMonate, arbeit, frei, btBr
             klasse = "frei";
         }
 
-        html += `
+        tableHtml += `
             <tr>
                 <td>${i + 1}</td>
                 <td>${monatName}</td>
@@ -847,14 +979,32 @@ function erstelleMonatsliste(ersterFreierMonat, gesamtMonate, arbeit, frei, btBr
                 <td>${euro(btNetto)}</td>
             </tr>
         `;
+
+        cardHtml += `
+            <div class="monat-card">
+                <div class="monat-card-top">
+                    <div>
+                        <div class="monat-name">${i + 1}. ${monatName}</div>
+                    </div>
+                    <span class="badge ${klasse}">${phase}</span>
+                </div>
+                <div class="monat-werte">
+                    Brutto: <b>${euro(btBrutto)}</b><br>
+                    Netto geschätzt: <b>${euro(btNetto)}</b>
+                </div>
+            </div>
+        `;
     }
 
-    html += `
-            </tbody>
-        </table>
+    tableHtml += `
+                </tbody>
+            </table>
+        </div>
     `;
 
-    document.getElementById("monatsliste").innerHTML = html;
+    cardHtml += `</div>`;
+
+    document.getElementById("monatsliste").innerHTML = tableHtml + cardHtml;
 }
 
 umschaltenNettoModus();
