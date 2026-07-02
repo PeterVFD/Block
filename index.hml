@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="de">
-<head>
+
    <script>
     window.PROTECTED_HUB_URL = "https://petervfd.github.io/haupt/";
   </script>
   <script src="schutz.js"></script>
+
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blockteilzeit-Rechner</title>
@@ -29,7 +31,7 @@
     }
 
     .app {
-        max-width: 850px;
+        max-width: 900px;
         margin: auto;
         background: var(--karte);
         border-radius: 18px;
@@ -83,12 +85,18 @@
         font-size: 15px;
         box-sizing: border-box;
         width: 100%;
+        background: white;
     }
 
     input:focus, select:focus {
         outline: none;
         border-color: var(--rot);
         box-shadow: 0 0 0 2px rgba(230,0,0,0.12);
+    }
+
+    input[readonly] {
+        background: #f1f1f1;
+        color: #555;
     }
 
     button {
@@ -232,7 +240,7 @@
 
     <div class="kopf">
         <h1>Blockteilzeit-Rechner</h1>
-        <p>Berechnung des geglätteten Brutto- und Nettogehalts inklusive Monatsübersicht</p>
+        <p>Berechnung des reduzierten Brutto- und Nettogehalts nach 50 %- oder 75 %-Modell</p>
     </div>
 
     <div class="inhalt">
@@ -257,13 +265,28 @@
             </div>
 
             <div class="feld">
-                <label for="arbeit">Monate Arbeitsphase</label>
-                <input type="number" id="arbeit" placeholder="z. B. 1" step="1">
-            </div>
+                <label for="modell">Modell der Arbeitszeitreduzierung</label>
+                <select id="modell" onchange="setzeModell()">
+                    <option value="">Bitte Modell auswählen</option>
 
-            <div class="feld">
-                <label for="frei">Monate Freistellungsphase</label>
-                <input type="number" id="frei" placeholder="z. B. 1" step="1">
+                    <optgroup label="Entgeltreduzierung auf 50 %">
+                        <option value="1-1">50 % | 1 Monat Arbeit / 1 Monat frei</option>
+                        <option value="2-2">50 % | 2 Monate Arbeit / 2 Monate frei</option>
+                        <option value="3-3">50 % | 3 Monate Arbeit / 3 Monate frei</option>
+                        <option value="4-4">50 % | 4 Monate Arbeit / 4 Monate frei</option>
+                        <option value="5-5">50 % | 5 Monate Arbeit / 5 Monate frei</option>
+                        <option value="6-6">50 % | 6 Monate Arbeit / 6 Monate frei</option>
+                    </optgroup>
+
+                    <optgroup label="Entgeltreduzierung auf 75 %">
+                        <option value="3-1">75 % | 3 Monate Arbeit / 1 Monat frei</option>
+                        <option value="6-2">75 % | 6 Monate Arbeit / 2 Monate frei</option>
+                        <option value="9-3">75 % | 9 Monate Arbeit / 3 Monate frei</option>
+                        <option value="12-4">75 % | 12 Monate Arbeit / 4 Monate frei</option>
+                        <option value="15-5">75 % | 15 Monate Arbeit / 5 Monate frei</option>
+                        <option value="18-6">75 % | 18 Monate Arbeit / 6 Monate frei</option>
+                    </optgroup>
+                </select>
             </div>
 
             <div class="feld">
@@ -282,6 +305,16 @@
                     <option value="10">November</option>
                     <option value="11">Dezember</option>
                 </select>
+            </div>
+
+            <div class="feld">
+                <label for="arbeit">Monate Arbeitsphase</label>
+                <input type="number" id="arbeit" readonly>
+            </div>
+
+            <div class="feld">
+                <label for="frei">Monate Freistellungsphase</label>
+                <input type="number" id="frei" readonly>
             </div>
 
             <div class="feld">
@@ -339,7 +372,7 @@
                 </div>
 
                 <div class="karte">
-                    <div class="titel">Blockteilzeit-Quote</div>
+                    <div class="titel">Entgeltquote</div>
                     <div class="wert" id="quote">0 %</div>
                 </div>
 
@@ -348,7 +381,7 @@
             <div class="details" id="details"></div>
 
             <div class="details">
-                <b>Monate mit geringerem Gehalt</b>
+                <b>Monatsübersicht</b>
                 <div id="monatsliste"></div>
             </div>
 
@@ -392,8 +425,26 @@ function getNettoFaktor(steuerklasse) {
     }
 }
 
+function setzeModell() {
+    const modell = document.getElementById("modell").value;
+
+    if (!modell) {
+        document.getElementById("arbeit").value = "";
+        document.getElementById("frei").value = "";
+        return;
+    }
+
+    const teile = modell.split("-");
+    const arbeit = parseInt(teile[0]);
+    const frei = parseInt(teile[1]);
+
+    document.getElementById("arbeit").value = arbeit;
+    document.getElementById("frei").value = frei;
+}
+
 function berechnen() {
     const brutto = parseFloat(document.getElementById("brutto").value) || 0;
+    const modell = document.getElementById("modell").value;
     const arbeit = parseInt(document.getElementById("arbeit").value) || 0;
     const frei = parseInt(document.getElementById("frei").value) || 0;
     const steuerklasse = document.getElementById("steuerklasse").value;
@@ -413,26 +464,19 @@ function berechnen() {
         return;
     }
 
-    if (arbeit <= 0) {
-        fehler.innerText = "Bitte tragen Sie mindestens 1 Monat Arbeitsphase ein.";
+    if (!modell) {
+        fehler.innerText = "Bitte wählen Sie ein Modell der Arbeitszeitreduzierung aus.";
         fehler.style.display = "block";
         return;
     }
 
-    if (frei < 0) {
-        fehler.innerText = "Die Freistellungsphase darf nicht negativ sein.";
+    if (arbeit <= 0 || frei < 0) {
+        fehler.innerText = "Das ausgewählte Modell enthält ungültige Werte.";
         fehler.style.display = "block";
         return;
     }
 
     const gesamtMonate = arbeit + frei;
-
-    if (gesamtMonate <= 0) {
-        fehler.innerText = "Bitte tragen Sie eine gültige Laufzeit ein.";
-        fehler.style.display = "block";
-        return;
-    }
-
     const quote = arbeit / gesamtMonate;
 
     const sonderzahlungMonatlichAlt = sonderzahlung / 12;
@@ -470,18 +514,29 @@ function berechnen() {
     document.getElementById("quote").innerText = prozent(quote * 100);
 
     document.getElementById("details").innerHTML = `
-        <b>Berechnung:</b><br>
-        Aktuelles Vollzeit-Brutto monatlich: ${euro(brutto)}<br>
+        <b>Ausgewähltes Modell:</b><br>
         Arbeitsphase: ${arbeit} Monat(e)<br>
         Freistellungsphase: ${frei} Monat(e)<br>
-        Gesamtlaufzeit mit reduziertem Gehalt: ${gesamtMonate} Monat(e)<br><br>
+        Gesamtlaufzeit mit reduziertem Gehalt: ${gesamtMonate} Monat(e)<br>
+        Entgeltquote: ${prozent(quote * 100)}<br><br>
 
-        <b>Formel:</b><br>
-        ${euro(brutto)} × ${arbeit} ÷ ${gesamtMonate} = ${euro(btBruttoOhneSonder)}<br><br>
+        <b>Berechnung:</b><br>
+        Aktuelles Vollzeit-Brutto monatlich: ${euro(brutto)}<br>
+        Formel: ${euro(brutto)} × ${arbeit} ÷ ${gesamtMonate} = ${euro(btBruttoOhneSonder)}<br><br>
+
+        <b>Ergebnis:</b><br>
+        Neues monatliches Brutto während der Blockteilzeit: ${euro(btBrutto)}<br>
+        Geschätztes monatliches Netto während der Blockteilzeit: ${euro(btNetto)}<br>
+        Monatliche Brutto-Differenz: ${euro(differenz)}<br><br>
+
+        <b>Werte für 2 Monate:</b><br>
+        Neues Brutto für 2 Monate: ${euro(brutto2Monate)}<br>
+        Geschätztes Netto für 2 Monate: ${euro(netto2Monate)}<br><br>
 
         <b>Gesamtwerte über die Blockteilzeit:</b><br>
-        Neues Brutto gesamt: ${euro(gesamtNeuBrutto)}<br>
-        Geschätztes Netto gesamt: ${euro(gesamtNeuNetto)}<br>
+        Bisheriges Brutto über ${gesamtMonate} Monat(e): ${euro(gesamtAlt)}<br>
+        Neues Brutto über ${gesamtMonate} Monat(e): ${euro(gesamtNeuBrutto)}<br>
+        Geschätztes Netto über ${gesamtMonate} Monat(e): ${euro(gesamtNeuNetto)}<br>
         Brutto-Differenz gesamt gegenüber Vollzeit: ${euro(gesamtDifferenz)}<br><br>
 
         <b>Sonderzahlung:</b><br>
