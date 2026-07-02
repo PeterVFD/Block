@@ -311,7 +311,7 @@
             </div>
 
             <div class="feld">
-                <label for="startmonat">Erster Monat mit geringerem Gehalt</label>
+                <label for="startmonat">Erster freier Monat</label>
                 <select id="startmonat">
                     <option value="0">Januar</option>
                     <option value="1">Februar</option>
@@ -514,13 +514,6 @@ function einkommensteuerGrundtabelleGrob(jahresEinkommen) {
     const x = Math.max(0, jahresEinkommen);
     let steuer = 0;
 
-    /*
-      Grobe Näherung der deutschen Einkommensteuer:
-      - Grundfreibetrag vereinfacht
-      - Progressionsbereiche vereinfacht
-      - keine amtliche Lohnsteuerberechnung
-    */
-
     if (x <= 12096) {
         steuer = 0;
     } else if (x <= 18000) {
@@ -597,7 +590,7 @@ function berechnen() {
     const nettoAuswahl = document.getElementById("nettofaktor").value;
     const nettoModus = document.querySelector('input[name="nettoModus"]:checked').value;
     const sonderzahlung = parseFloat(document.getElementById("sonderzahlung").value) || 0;
-    const startmonat = parseInt(document.getElementById("startmonat").value);
+    const ersterFreierMonat = parseInt(document.getElementById("startmonat").value);
     const sozialProzent = parseFloat(document.getElementById("sozial").value) || 20.5;
 
     const fehler = document.getElementById("fehler");
@@ -618,7 +611,7 @@ function berechnen() {
         return;
     }
 
-    if (arbeit <= 0 || frei < 0) {
+    if (arbeit <= 0 || frei <= 0) {
         fehler.innerText = "Das ausgewählte Modell enthält ungültige Werte.";
         fehler.style.display = "block";
         return;
@@ -735,7 +728,8 @@ function berechnen() {
         Arbeitsphase: ${arbeit} Monat(e)<br>
         Freistellungsphase: ${frei} Monat(e)<br>
         Gesamtlaufzeit mit reduziertem Gehalt: ${gesamtMonate} Monat(e)<br>
-        Entgeltquote: ${prozent(quote * 100)}<br><br>
+        Entgeltquote: ${prozent(quote * 100)}<br>
+        Erster freier Monat: ${getMonatsname(ersterFreierMonat)}<br><br>
 
         <b>Berechnung Brutto:</b><br>
         Aktuelles Vollzeit-Brutto monatlich: ${euro(brutto)}<br>
@@ -766,16 +760,42 @@ function berechnen() {
         Monatlich während Blockteilzeit: ${euro(sonderzahlungMonatlichNeu)}
     `;
 
-    erstelleMonatsliste(startmonat, gesamtMonate, arbeit, frei, btBrutto, btNetto);
+    erstelleMonatsliste(ersterFreierMonat, gesamtMonate, arbeit, frei, btBrutto, btNetto);
 
     ergebnis.style.display = "block";
 }
 
-function erstelleMonatsliste(startmonat, gesamtMonate, arbeit, frei, btBrutto, btNetto) {
+function getMonatsname(index) {
     const monate = [
         "Januar", "Februar", "März", "April", "Mai", "Juni",
         "Juli", "August", "September", "Oktober", "November", "Dezember"
     ];
+
+    return monate[index] || "";
+}
+
+function erstelleMonatsliste(ersterFreierMonat, gesamtMonate, arbeit, frei, btBrutto, btNetto) {
+    const monate = [
+        "Januar", "Februar", "März", "April", "Mai", "Juni",
+        "Juli", "August", "September", "Oktober", "November", "Dezember"
+    ];
+
+    /*
+      Der ausgewählte Monat ist der erste freie Monat.
+      Die Arbeitsphase wird automatisch davor berechnet.
+
+      Beispiel:
+      Modell: 3 Monate Arbeit / 1 Monat frei
+      Erster freier Monat: April
+
+      Ergebnis:
+      Januar   = Arbeitsphase
+      Februar  = Arbeitsphase
+      März     = Arbeitsphase
+      April    = Freistellung
+    */
+
+    const ersterArbeitsMonatAbsolut = ersterFreierMonat - arbeit;
 
     let html = `
         <table>
@@ -792,9 +812,20 @@ function erstelleMonatsliste(startmonat, gesamtMonate, arbeit, frei, btBrutto, b
     `;
 
     for (let i = 0; i < gesamtMonate; i++) {
-        const monatIndex = (startmonat + i) % 12;
-        const jahrPlus = Math.floor((startmonat + i) / 12);
-        const monatName = monate[monatIndex] + (jahrPlus > 0 ? " +" + jahrPlus : "");
+        const absoluterMonat = ersterArbeitsMonatAbsolut + i;
+
+        const monatIndex = ((absoluterMonat % 12) + 12) % 12;
+        const basisJahr = Math.floor(absoluterMonat / 12);
+
+        let jahrText = "";
+
+        if (basisJahr < 0) {
+            jahrText = " (Vorjahr)";
+        } else if (basisJahr > 0) {
+            jahrText = basisJahr === 1 ? " (Folgejahr)" : " (Folgejahr +" + basisJahr + ")";
+        }
+
+        const monatName = monate[monatIndex] + jahrText;
 
         let phase = "";
         let klasse = "";
