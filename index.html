@@ -30,7 +30,7 @@
     }
 
     .app {
-        max-width: 900px;
+        max-width: 950px;
         margin: auto;
         background: var(--karte);
         border-radius: 18px;
@@ -87,6 +87,11 @@
         background: white;
     }
 
+    input[type="radio"] {
+        width: auto;
+        margin-right: 8px;
+    }
+
     input:focus, select:focus {
         outline: none;
         border-color: var(--rot);
@@ -96,6 +101,23 @@
     input[readonly] {
         background: #f1f1f1;
         color: #555;
+    }
+
+    .radioBox {
+        background: #fafafa;
+        border: 1px solid #e5e5e5;
+        border-radius: 12px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .radioBox label {
+        margin: 0;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
     }
 
     button {
@@ -239,7 +261,7 @@
 
     <div class="kopf">
         <h1>Blockteilzeit-Rechner</h1>
-        <p>Berechnung des reduzierten Brutto- und Nettogehalts nach 50 %- oder 75 %-Modell</p>
+        <p>Berechnung des reduzierten Brutto- und Nettogehalts inklusive grober Steuerprogression</p>
     </div>
 
     <div class="inhalt">
@@ -322,7 +344,21 @@
             </div>
 
             <div class="feld">
-                <label for="nettofaktor">Netto-Schätzung</label>
+                <label>Netto-Berechnung</label>
+                <div class="radioBox">
+                    <label>
+                        <input type="radio" name="nettoModus" value="einfach" onchange="umschaltenNettoModus()">
+                        Einfache Netto-Schätzung
+                    </label>
+                    <label>
+                        <input type="radio" name="nettoModus" value="progression" checked onchange="umschaltenNettoModus()">
+                        Steuerprogression grob berücksichtigen
+                    </label>
+                </div>
+            </div>
+
+            <div class="feld" id="faktorFeld" style="display:none;">
+                <label for="nettofaktor">Netto-Faktor bei einfacher Schätzung</label>
                 <select id="nettofaktor">
                     <option value="auto">Automatisch nach Steuerklasse</option>
                     <option value="0.80">80 % vom Brutto</option>
@@ -333,6 +369,11 @@
                     <option value="0.55">55 % vom Brutto</option>
                     <option value="0.50">50 % vom Brutto</option>
                 </select>
+            </div>
+
+            <div class="feld">
+                <label for="sozial">Sozialabgaben pauschal (%)</label>
+                <input type="number" id="sozial" value="20.5" step="0.1">
             </div>
 
         </div>
@@ -375,6 +416,26 @@
                     <div class="wert" id="quote">0 %</div>
                 </div>
 
+                <div class="karte">
+                    <div class="titel">Durchschnittssteuersatz vorher</div>
+                    <div class="wert" id="avgAlt">0 %</div>
+                </div>
+
+                <div class="karte">
+                    <div class="titel">Durchschnittssteuersatz neu</div>
+                    <div class="wert" id="avgNeu">0 %</div>
+                </div>
+
+                <div class="karte">
+                    <div class="titel">Grenzsteuersatz vorher</div>
+                    <div class="wert" id="grenzAlt">0 %</div>
+                </div>
+
+                <div class="karte">
+                    <div class="titel">Grenzsteuersatz neu</div>
+                    <div class="wert" id="grenzNeu">0 %</div>
+                </div>
+
             </div>
 
             <div class="details" id="details"></div>
@@ -386,9 +447,9 @@
 
             <div class="hinweis">
                 <b>Hinweis:</b><br>
-                Die Netto-Berechnung ist nur eine grobe Schätzung. Sie ersetzt keine verbindliche Entgeltabrechnung.
-                Steuerklasse, Krankenversicherung, Zusatzbeitrag, Kinderfreibeträge, Kirchensteuer, Bundesland und weitere Faktoren
-                werden hier nicht exakt berechnet.
+                Die Brutto-Berechnung erfolgt nach dem ausgewählten Blockteilzeit-Modell.
+                Die Netto-Berechnung ist entweder eine einfache Schätzung oder eine grobe Progressionsnäherung.
+                Sie ersetzt keine verbindliche Entgeltabrechnung, Steuerberatung oder Berechnung durch die Personalabteilung.
             </div>
 
         </div>
@@ -434,11 +495,97 @@ function setzeModell() {
     }
 
     const teile = modell.split("-");
-    const arbeit = parseInt(teile[0]);
-    const frei = parseInt(teile[1]);
+    document.getElementById("arbeit").value = parseInt(teile[0]);
+    document.getElementById("frei").value = parseInt(teile[1]);
+}
 
-    document.getElementById("arbeit").value = arbeit;
-    document.getElementById("frei").value = frei;
+function umschaltenNettoModus() {
+    const modus = document.querySelector('input[name="nettoModus"]:checked').value;
+    const faktorFeld = document.getElementById("faktorFeld");
+
+    if (modus === "einfach") {
+        faktorFeld.style.display = "flex";
+    } else {
+        faktorFeld.style.display = "none";
+    }
+}
+
+function einkommensteuerGrundtabelleGrob(jahresEinkommen) {
+    const x = Math.max(0, jahresEinkommen);
+    let steuer = 0;
+
+    /*
+      Grobe Näherung der deutschen Einkommensteuer:
+      - Grundfreibetrag vereinfacht
+      - Progressionsbereiche vereinfacht
+      - keine amtliche Lohnsteuerberechnung
+    */
+
+    if (x <= 12096) {
+        steuer = 0;
+    } else if (x <= 18000) {
+        steuer = (x - 12096) * 0.14;
+    } else if (x <= 66760) {
+        steuer =
+            (18000 - 12096) * 0.14 +
+            (x - 18000) * 0.24;
+    } else if (x <= 277825) {
+        steuer =
+            (18000 - 12096) * 0.14 +
+            (66760 - 18000) * 0.24 +
+            (x - 66760) * 0.42;
+    } else {
+        steuer =
+            (18000 - 12096) * 0.14 +
+            (66760 - 18000) * 0.24 +
+            (277825 - 66760) * 0.42 +
+            (x - 277825) * 0.45;
+    }
+
+    return Math.max(0, steuer);
+}
+
+function einkommensteuerNachSteuerklasseGrob(jahresEinkommen, steuerklasse) {
+    let steuer = 0;
+
+    if (steuerklasse === "3") {
+        steuer = einkommensteuerGrundtabelleGrob(jahresEinkommen / 2) * 2;
+    } else if (steuerklasse === "5") {
+        steuer = einkommensteuerGrundtabelleGrob(jahresEinkommen) * 1.18;
+    } else if (steuerklasse === "6") {
+        steuer = einkommensteuerGrundtabelleGrob(jahresEinkommen) * 1.28;
+    } else if (steuerklasse === "2") {
+        steuer = einkommensteuerGrundtabelleGrob(Math.max(0, jahresEinkommen - 4260));
+    } else {
+        steuer = einkommensteuerGrundtabelleGrob(jahresEinkommen);
+    }
+
+    return Math.max(0, steuer);
+}
+
+function berechneProgression(monatsBrutto, steuerklasse, sozialProzent) {
+    const jahresBrutto = monatsBrutto * 12;
+    const steuerJahr = einkommensteuerNachSteuerklasseGrob(jahresBrutto, steuerklasse);
+
+    const durchschnitt = jahresBrutto > 0 ? steuerJahr / jahresBrutto : 0;
+
+    const steuerPlus = einkommensteuerNachSteuerklasseGrob(jahresBrutto + 100, steuerklasse);
+    const grenz = (steuerPlus - steuerJahr) / 100;
+
+    const sozialFaktor = sozialProzent / 100;
+    const sozialJahr = jahresBrutto * sozialFaktor;
+
+    const nettoJahr = jahresBrutto - steuerJahr - sozialJahr;
+    const nettoMonat = nettoJahr / 12;
+
+    return {
+        jahresBrutto: jahresBrutto,
+        steuerJahr: steuerJahr,
+        sozialJahr: sozialJahr,
+        durchschnitt: Math.max(0, durchschnitt),
+        grenz: Math.max(0, grenz),
+        nettoMonat: Math.max(0, nettoMonat)
+    };
 }
 
 function berechnen() {
@@ -448,8 +595,10 @@ function berechnen() {
     const frei = parseInt(document.getElementById("frei").value) || 0;
     const steuerklasse = document.getElementById("steuerklasse").value;
     const nettoAuswahl = document.getElementById("nettofaktor").value;
+    const nettoModus = document.querySelector('input[name="nettoModus"]:checked').value;
     const sonderzahlung = parseFloat(document.getElementById("sonderzahlung").value) || 0;
     const startmonat = parseInt(document.getElementById("startmonat").value);
+    const sozialProzent = parseFloat(document.getElementById("sozial").value) || 20.5;
 
     const fehler = document.getElementById("fehler");
     const ergebnis = document.getElementById("ergebnis");
@@ -481,29 +630,65 @@ function berechnen() {
     const sonderzahlungMonatlichAlt = sonderzahlung / 12;
     const sonderzahlungMonatlichNeu = sonderzahlungMonatlichAlt * quote;
 
+    const bruttoAltMitSonder = brutto + sonderzahlungMonatlichAlt;
+
     const btBruttoOhneSonder = brutto * quote;
     const btBrutto = btBruttoOhneSonder + sonderzahlungMonatlichNeu;
 
-    let nettoFaktor;
+    let btNetto = 0;
+    let nettoAlt = 0;
 
-    if (nettoAuswahl === "auto") {
-        nettoFaktor = getNettoFaktor(steuerklasse);
+    let avgAlt = 0;
+    let avgNeu = 0;
+    let grenzAlt = 0;
+    let grenzNeu = 0;
+
+    let steuerAltJahr = 0;
+    let steuerNeuJahr = 0;
+    let sozialAltJahr = 0;
+    let sozialNeuJahr = 0;
+
+    if (nettoModus === "einfach") {
+        let nettoFaktor;
+
+        if (nettoAuswahl === "auto") {
+            nettoFaktor = getNettoFaktor(steuerklasse);
+        } else {
+            nettoFaktor = parseFloat(nettoAuswahl);
+        }
+
+        nettoAlt = bruttoAltMitSonder * nettoFaktor;
+        btNetto = btBrutto * nettoFaktor;
+
     } else {
-        nettoFaktor = parseFloat(nettoAuswahl);
-    }
+        const progressionAlt = berechneProgression(bruttoAltMitSonder, steuerklasse, sozialProzent);
+        const progressionNeu = berechneProgression(btBrutto, steuerklasse, sozialProzent);
 
-    const btNetto = btBrutto * nettoFaktor;
+        nettoAlt = progressionAlt.nettoMonat;
+        btNetto = progressionNeu.nettoMonat;
+
+        avgAlt = progressionAlt.durchschnitt;
+        avgNeu = progressionNeu.durchschnitt;
+        grenzAlt = progressionAlt.grenz;
+        grenzNeu = progressionNeu.grenz;
+
+        steuerAltJahr = progressionAlt.steuerJahr;
+        steuerNeuJahr = progressionNeu.steuerJahr;
+        sozialAltJahr = progressionAlt.sozialJahr;
+        sozialNeuJahr = progressionNeu.sozialJahr;
+    }
 
     const brutto2Monate = btBrutto * 2;
     const netto2Monate = btNetto * 2;
 
-    const bruttoAltMitSonder = brutto + sonderzahlungMonatlichAlt;
     const differenz = bruttoAltMitSonder - btBrutto;
+    const nettoDifferenz = nettoAlt - btNetto;
 
     const gesamtAlt = bruttoAltMitSonder * gesamtMonate;
     const gesamtNeuBrutto = btBrutto * gesamtMonate;
     const gesamtNeuNetto = btNetto * gesamtMonate;
     const gesamtDifferenz = gesamtAlt - gesamtNeuBrutto;
+    const gesamtNettoDifferenz = nettoDifferenz * gesamtMonate;
 
     document.getElementById("btBrutto").innerText = euro(btBrutto);
     document.getElementById("btNetto").innerText = euro(btNetto);
@@ -512,6 +697,39 @@ function berechnen() {
     document.getElementById("differenz").innerText = euro(differenz);
     document.getElementById("quote").innerText = prozent(quote * 100);
 
+    if (nettoModus === "progression") {
+        document.getElementById("avgAlt").innerText = prozent(avgAlt * 100);
+        document.getElementById("avgNeu").innerText = prozent(avgNeu * 100);
+        document.getElementById("grenzAlt").innerText = prozent(grenzAlt * 100);
+        document.getElementById("grenzNeu").innerText = prozent(grenzNeu * 100);
+    } else {
+        document.getElementById("avgAlt").innerText = "—";
+        document.getElementById("avgNeu").innerText = "—";
+        document.getElementById("grenzAlt").innerText = "—";
+        document.getElementById("grenzNeu").innerText = "—";
+    }
+
+    let steuerDetails = "";
+
+    if (nettoModus === "progression") {
+        steuerDetails = `
+            <br><b>Grobe Steuerprogression:</b><br>
+            Geschätzte Steuer vorher jährlich: ${euro(steuerAltJahr)}<br>
+            Geschätzte Steuer neu jährlich: ${euro(steuerNeuJahr)}<br>
+            Geschätzte Sozialabgaben vorher jährlich: ${euro(sozialAltJahr)}<br>
+            Geschätzte Sozialabgaben neu jährlich: ${euro(sozialNeuJahr)}<br>
+            Durchschnittssteuersatz vorher: ${prozent(avgAlt * 100)}<br>
+            Durchschnittssteuersatz neu: ${prozent(avgNeu * 100)}<br>
+            Grenzsteuersatz vorher: ${prozent(grenzAlt * 100)}<br>
+            Grenzsteuersatz neu: ${prozent(grenzNeu * 100)}<br>
+        `;
+    } else {
+        steuerDetails = `
+            <br><b>Netto-Schätzung:</b><br>
+            Berechnung über pauschalen Netto-Faktor. Grenz- und Durchschnittssteuersätze werden in diesem Modus nicht berechnet.<br>
+        `;
+    }
+
     document.getElementById("details").innerHTML = `
         <b>Ausgewähltes Modell:</b><br>
         Arbeitsphase: ${arbeit} Monat(e)<br>
@@ -519,14 +737,15 @@ function berechnen() {
         Gesamtlaufzeit mit reduziertem Gehalt: ${gesamtMonate} Monat(e)<br>
         Entgeltquote: ${prozent(quote * 100)}<br><br>
 
-        <b>Berechnung:</b><br>
+        <b>Berechnung Brutto:</b><br>
         Aktuelles Vollzeit-Brutto monatlich: ${euro(brutto)}<br>
         Formel: ${euro(brutto)} × ${arbeit} ÷ ${gesamtMonate} = ${euro(btBruttoOhneSonder)}<br><br>
 
-        <b>Ergebnis:</b><br>
-        Neues monatliches Brutto während der Blockteilzeit: ${euro(btBrutto)}<br>
-        Geschätztes monatliches Netto während der Blockteilzeit: ${euro(btNetto)}<br>
-        Monatliche Brutto-Differenz: ${euro(differenz)}<br><br>
+        <b>Ergebnis monatlich:</b><br>
+        Neues Brutto während der Blockteilzeit: ${euro(btBrutto)}<br>
+        Geschätztes Netto während der Blockteilzeit: ${euro(btNetto)}<br>
+        Monatliche Brutto-Differenz: ${euro(differenz)}<br>
+        Monatliche Netto-Differenz geschätzt: ${euro(nettoDifferenz)}<br><br>
 
         <b>Werte für 2 Monate:</b><br>
         Neues Brutto für 2 Monate: ${euro(brutto2Monate)}<br>
@@ -536,9 +755,12 @@ function berechnen() {
         Bisheriges Brutto über ${gesamtMonate} Monat(e): ${euro(gesamtAlt)}<br>
         Neues Brutto über ${gesamtMonate} Monat(e): ${euro(gesamtNeuBrutto)}<br>
         Geschätztes Netto über ${gesamtMonate} Monat(e): ${euro(gesamtNeuNetto)}<br>
-        Brutto-Differenz gesamt gegenüber Vollzeit: ${euro(gesamtDifferenz)}<br><br>
+        Brutto-Differenz gesamt gegenüber Vollzeit: ${euro(gesamtDifferenz)}<br>
+        Netto-Differenz gesamt geschätzt: ${euro(gesamtNettoDifferenz)}<br>
 
-        <b>Sonderzahlung:</b><br>
+        ${steuerDetails}
+
+        <br><b>Sonderzahlung:</b><br>
         Jährliche Sonderzahlung: ${euro(sonderzahlung)}<br>
         Monatlich vorher: ${euro(sonderzahlungMonatlichAlt)}<br>
         Monatlich während Blockteilzeit: ${euro(sonderzahlungMonatlichNeu)}
@@ -603,6 +825,8 @@ function erstelleMonatsliste(startmonat, gesamtMonate, arbeit, frei, btBrutto, b
 
     document.getElementById("monatsliste").innerHTML = html;
 }
+
+umschaltenNettoModus();
 </script>
 
 </body>
